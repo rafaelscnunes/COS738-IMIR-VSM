@@ -5,8 +5,8 @@ Created on Wednesday, june 28th, 2017
 @title:  IMIR - In Memory Information Retrieval - Processador de Consultas
 @author: Rafael Nunes - rnunes@cos.ufrj.br
 """
-# Processador de Consultas - O objetivo desse módulo é transformar o arquivo de consultas fornecido ao padrão de palavras que estamos utilizando.
-# TODO: 1) O Processador de Consultas deverá ler um arquivo de configuração
+# Processador de Consultas - O objetivo desse módulo é transformar o arquivo de consultas fornecido no padrão de palavras que estamos utilizando.
+# DONE: 1) O Processador de Consultas deverá ler um arquivo de configuração
 # a. O arquivo é criado por vocês
 # b. O nome do arquivo é PC.CFG
 # c. Ele contém dois tipos de instruções:
@@ -17,7 +17,7 @@ Created on Wednesday, june 28th, 2017
 
 # TODO: 2) O Processador de Consultas deverá ler um arquivo em formato XML
 # a. O arquivo a ser lido será indicado pela instrução LEIA no arquivo de configuração
-#   i. O formato é descrito pelo arquivo “cfc2-query.dtd”.
+#   i. O formato é descrito pelo arquivo “cfcquery-2.dtd”.
 #  ii. O arquivo a ser lido é “cfquery.xml”.
 
 # TODO: 3) O Processador de Consultas deverá gerar dois arquivos
@@ -56,3 +56,34 @@ Created on Wednesday, june 28th, 2017
 # 4. Identificar quando terminaram os processamentos
 # 5. Calcular os tempos médios de processamento de consultas, documento e palavras, de acordocom o programa sendo usado
 # 6. Identificar erros no processamento, caso aconteçam.
+
+import os
+import xml.etree.cElementTree as ET
+
+
+os.chdir('/Users/rafaenune/Documents/PESC-EDC/COS738 - Busca e Recuperação da Informação/GitHub/')
+
+
+f_config = open('PC.CFG', 'r')
+f_leia = './data/' + f_config.readline().split('=')[1][:-1]
+f_consultas = './data/' + f_config.readline().split('=')[1][:-1]
+f_esperados = './data/' + f_config.readline().split('=')[1][:-1]
+f_config.close()
+
+
+# Parse a xml file (specify the path)
+try:
+    tree = ET.parse(f_leia)
+    root = tree.getroot()
+except:
+    exit_err("Unable to open and parse input definition file: " + f_leia)
+
+
+# for child in root:
+#     print(child.tag, child.iter('QueryNumber'))
+
+for elem in tree.iter():
+    print(elem.tag, elem.attrib)
+
+# for elem in tree.iter(tag='QueryNumber'):
+#     print(elem.tag, elem.attrib)
