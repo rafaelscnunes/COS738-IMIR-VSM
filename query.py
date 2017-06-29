@@ -83,7 +83,7 @@ except:
 #     print(child.tag, child.iter('QueryNumber'))
 
 for elem in tree.iter():
-    print(elem.tag, elem.attrib)
+    print(elem.tag, elem.attrib, elem.text)
 
 # for elem in tree.iter(tag='QueryNumber'):
 #     print(elem.tag, elem.attrib)
