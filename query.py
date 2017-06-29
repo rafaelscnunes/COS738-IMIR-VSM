@@ -15,7 +15,7 @@ Created on Wednesday, june 28th, 2017
 # iii. ESPERADOS=<nome de arquivo>
 #  iv. As instruções são obrigatórias, aparecem uma única vez e nessa ordem.
 
-# TODO: 2) O Processador de Consultas deverá ler um arquivo em formato XML
+# DONE: 2) O Processador de Consultas deverá ler um arquivo em formato XML
 # a. O arquivo a ser lido será indicado pela instrução LEIA no arquivo de configuração
 #   i. O formato é descrito pelo arquivo “cfcquery-2.dtd”.
 #  ii. O arquivo a ser lido é “cfquery.xml”.
