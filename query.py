@@ -58,7 +58,10 @@ Created on Wednesday, june 28th, 2017
 # 6. Identificar erros no processamento, caso aconteçam.
 
 import os
-import xml.etree.cElementTree as ET
+try:
+    import xml.etree.cElementTree as ET
+except ImportError:
+    import xml.etree.ElementTree as ET
 
 
 os.chdir('/Users/rafaenune/Documents/PESC-EDC/COS738 - Busca e Recuperação da Informação/GitHub/')
