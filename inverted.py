@@ -44,3 +44,132 @@ Created on Wednesday, june 28th, 2017
 # 4. Identificar quando terminaram os processamentos
 # 5. Calcular os tempos médios de processamento de consultas, documento e palavras, de acordocom o programa sendo usado
 # 6. Identificar erros no processamento, caso aconteçam.
+
+import os
+import logging as log
+import xml.etree.cElementTree as ET
+
+os.chdir('/Users/rafaenune/Documents/PESC-EDC/COS738 - Busca e Recuperação '
+         'da Informação/GitHub/')
+log.basicConfig(level=log.DEBUG,
+                format='%(asctime)s|%(levelname)s|%(name)s|%(funcName)s'
+                       '|%(message)s',
+                filename=__file__.split('.')[0]+'.log',
+                filemode='w')
+CONFIG_FILE = 'GLI.CFG'
+SEP = ';'
+logger = log.getLogger(__file__.split('/')[-1])
+papers = []
+
+
+class paperRecords:
+    """ Classe para armazenar os registros lidos do .xml """
+
+    def __init__(self):
+        self.PaperNum = ''
+        self.RecordNum = 0
+        self.MedlineNum = 0
+        self.Authors = []
+        self.Title = ''
+        self.Source = ''
+        self.MajorSubJ_Topics = []
+        self.MinorSubJ_Topics = []
+        self.Abstract = ''
+        self.References = [{}]
+
+    def __repr__(self):
+        return '{}: {} {} {} {} {}' \
+               '    {} {} {} {} {}'.format(self.__class__.__name__,
+                                           self.PaperNum,
+                                           self.RecordNum,
+                                           self.MedlineNum,
+                                           self.Authors,
+                                           self.Title,
+                                           self.Source,
+                                           self.MajorSubJ_Topics,
+                                           self.MinorSubJ_Topics,
+                                           self.Abstract,
+                                           self.References)
+
+
+def computeVotes(votes):
+    evaluation = 0
+    for i in range(0, len(votes)):
+        evaluation = evaluation + int(votes[i])
+    return(str(evaluation))
+
+
+logger.info('Started %s' % __file__)
+files = []
+if os.path.isfile(CONFIG_FILE):
+    logger.info('Acessando ' + CONFIG_FILE + '...')
+    for line in open(CONFIG_FILE, 'r'):
+        if line.rstrip('\n').split('=')[0] == 'LEIA':
+            files.append(line.rstrip('\n').split('=')[1])
+        elif line.rstrip('\n').split('=')[0] == 'ESCREVA':
+            file_out = line.rstrip('\n').split('=')[1]
+            break
+        else:
+            logger.error('Detectado parâmetro inválido no arquivo de '
+                         'configuração')
+
+    if files and file_out:
+        logger.info('Parâmetros lidos com sucesso!')
+    else:
+        logger.error('Falha na carga dos parâmetros de configuração!')
+
+    logger.info('Processando os .xmls...')
+    for file in files:
+        tree = ET.parse(file)
+        root = tree.getroot()
+        if root:
+            for RECORD in root.findall('RECORD'):
+                paper = paperRecords()
+                paper.PaperNum = RECORD.find('PAPERNUM').text
+                paper.RecordNum = int(RECORD.find('RECORDNUM').text)
+                paper.MedlineNum = int(RECORD.find('MEDLINENUM').text)
+                for item in RECORD.iter('AUTHORS'):
+                    paper.Authors.append(item.text)
+                paper.Title = RECORD.find('TITLE').text
+                paper.Source = RECORD.find('SOURCE').text
+                for topic in RECORD.iter('MAJORSUBJ'):
+                    paper.MajorSubJ_Topics.append(topic.text)
+                for topic in RECORD.find('MINORSUBJ'):
+                    paper.MinorSubJ_Topics.append((topic.text))
+                paper.Abstract = RECORD.find('ABSTRACT').text
+                words = paper.Abstract.split()
+                paper.Abstract = ' '.join(words).upper()
+                for cite in RECORD.iter('REFERENCES'):
+                    paper.References.append(cite.attrib)
+                papers.append(paper)
+            logger.info('O processamento leu ' + str(len(papers)) +
+                        ' papers no arquivo ' + file)
+        else:
+            logger.error('Houve falha no processamento do arquivo ' + file)
+
+    # logger.info('Exportando todas as queries para .csv')
+    # f_out = open(f_consultas, 'w', encoding = 'utf-8')
+    # f_out.write('QueryNumber' + SEP + 'QueryText\n')
+    # count = 0
+    # for i in range(0, len(queries)):
+    #     f_out.write(str(queries[i].Number) + SEP + queries[i].Text + '\n')
+    #     count += 1
+    # logger.info('Foram exportados ' + str(count) + ' registros para ' +
+    #             f_consultas)
+    #
+    # logger.info('Exportando os votos de cada documento para .csv')
+    # f_out = open(f_esperados, 'w', encoding = 'utf-8')
+    # f_out.write('QueryNumber' + SEP + 'DocNumber' + SEP + 'DocVotes\n')
+    # count = 0
+    # for i in range(0, len(queries)):
+    #     for docs, votes in queries[i].Records.items():
+    #         f_out.write(str(queries[i].Number) + SEP + docs + SEP +
+    #                     computeVotes(votes) + '\n')
+    #         count += 1
+    # logger.info('Foram exportados ' + str(count) + ' registros para ' +
+    #             f_esperados)
+else:
+    logger.error('O arquivo ' + CONFIG_FILE + ' não foi localizado!')
+    print('O arquivo ' + CONFIG_FILE + ' não foi localizado. Execução '
+                                       'abortada!')
+logger.info('Finished %s' % __file__)
