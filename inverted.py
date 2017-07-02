@@ -67,6 +67,7 @@ class paperRecords:
 
     def __init__(self):
         self.PaperNum = ''
+        self.Citations = []
         self.RecordNum = 0
         self.MedlineNum = 0
         self.Authors = []
@@ -75,12 +76,13 @@ class paperRecords:
         self.MajorSubJ_Topics = []
         self.MinorSubJ_Topics = []
         self.Abstract = ''
-        self.References = [{}]
+        self.References = []
 
     def __repr__(self):
-        return '{}: {} {} {} {} {}' \
+        return '{}: {} {} {} {} {} {}' \
                '    {} {} {} {} {}'.format(self.__class__.__name__,
                                            self.PaperNum,
+                                           self.Citations,
                                            self.RecordNum,
                                            self.MedlineNum,
                                            self.Authors,
@@ -126,22 +128,49 @@ if os.path.isfile(CONFIG_FILE):
             for RECORD in root.findall('RECORD'):
                 paper = paperRecords()
                 paper.PaperNum = RECORD.find('PAPERNUM').text
+                try:
+                    for cite in RECORD.find('CITATIONS'):
+                        paper.Citations.append(cite.attrib)
+                except:
+                    logger.warning('O paper número: ' + paper.PaperNum +
+                                   ' no arquivo: ' + file + ' não tem'
+                                   ' nenhuma citação.')
+                    pass
                 paper.RecordNum = int(RECORD.find('RECORDNUM').text)
                 paper.MedlineNum = int(RECORD.find('MEDLINENUM').text)
-                for item in RECORD.iter('AUTHORS'):
+                for item in RECORD.find('AUTHORS'):
                     paper.Authors.append(item.text)
                 paper.Title = RECORD.find('TITLE').text
+                words = paper.Title.split()
+                paper.Title = ' '.join(words).upper()
                 paper.Source = RECORD.find('SOURCE').text
-                for topic in RECORD.iter('MAJORSUBJ'):
+                for topic in RECORD.find('MAJORSUBJ'):
                     paper.MajorSubJ_Topics.append(topic.text)
                 for topic in RECORD.find('MINORSUBJ'):
                     paper.MinorSubJ_Topics.append((topic.text))
-                paper.Abstract = RECORD.find('ABSTRACT').text
+                try:
+                    paper.Abstract = RECORD.find('ABSTRACT').text
+                except:
+                    logger.warning('O paper número: ' + paper.PaperNum +
+                                   ' no arquivo: ' + file + ' não tem'
+                                   ' ABSTRACT.')
+                    pass
+                try:
+                    paper.Abstract = RECORD.find('EXTRACT').text
+                except:
+                    logger.info('O paper número: ' + paper.PaperNum +
+                                   ' no arquivo: ' + file + ' não tem'
+                                   ' EXTRACT.')
+                    pass
                 words = paper.Abstract.split()
                 paper.Abstract = ' '.join(words).upper()
-                for cite in RECORD.iter('REFERENCES'):
-                    paper.References.append(cite.attrib)
+                try:
+                    for cite in RECORD.find('REFERENCES'):
+                        paper.References.append(cite.attrib)
+                except:
+                    pass
                 papers.append(paper)
+                print(papers[len(papers)-1])
             logger.info('O processamento leu ' + str(len(papers)) +
                         ' papers no arquivo ' + file)
         else:
