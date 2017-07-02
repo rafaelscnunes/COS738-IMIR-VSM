@@ -112,7 +112,7 @@ def computeVotes(votes):
 
 logger.info('Started %s' % __file__)
 if os.path.isfile(CONFIG_FILE):
-    logger.info('Acessando ' + CONFIG_FILE + '...')
+    logger.info('Accessing ' + CONFIG_FILE + '...')
     f_config = open(CONFIG_FILE, 'r')
     line1 = f_config.readline().rstrip('\n').split('=')
     line2 = f_config.readline().rstrip('\n').split('=')
@@ -125,18 +125,18 @@ if os.path.isfile(CONFIG_FILE):
             if line3[0] == 'ESPERADOS':
                 f_esperados = line3[1]
             else:
-                logger.error('O parâmetro ESPERADOS não foi localizado.')
+                logger.error('Parameter ESPERADOS not found.')
         else:
-            logger.error('O parâmetro CONSULTAS não foi localizado.')
+            logger.error('Parameter CONSULTAS not found.')
     else:
-        logger.error('O parâmetro LEIA não foi localizado.')
+        logger.error('Parameter LEIA not found.')
 
     if f_leia and f_consultas and f_esperados:
-        logger.info('Parâmetros lidos com sucesso!')
+        logger.info('Parameters read successfully!')
     else:
-        logger.error('Falha na carga dos parâmetros de configuração!')
+        logger.error('Fail reading configuration parameters!')
 
-    logger.info('Processando o .xml...')
+    logger.info('Parsing .xml...')
     tree = ET.parse(f_leia)
     root = tree.getroot()
     if root:
@@ -151,21 +151,20 @@ if os.path.isfile(CONFIG_FILE):
             for item in QUERY.iter('Item'):
                 query.Records[item.text] = item.get('score')
             queries.append(query)
-        logger.info('O processamento leu ' + str(len(queries)) + ' queries.')
+        logger.info('Recovered ' + str(len(queries)) + ' queries.')
     else:
-        logger.error('Houve falha no processamento do .xml')
+        logger.error('Failed parsing .xml')
 
-    logger.info('Exportando todas as queries para .csv')
+    logger.info('Exporting queries to .csv')
     f_out = open(f_consultas, 'w', encoding = 'utf-8')
     f_out.write('QueryNumber' + SEP + 'QueryText\n')
     count = 0
     for i in range(0, len(queries)):
         f_out.write(str(queries[i].Number) + SEP + queries[i].Text + '\n')
         count += 1
-    logger.info('Foram exportados ' + str(count) + ' registros para ' +
-                f_consultas)
+    logger.info('Exported ' + str(count) + ' records to ' + f_consultas)
 
-    logger.info('Exportando os votos de cada documento para .csv')
+    logger.info('Exporting document\'s votes to .csv')
     f_out = open(f_esperados, 'w', encoding = 'utf-8')
     f_out.write('QueryNumber' + SEP + 'DocNumber' + SEP + 'DocVotes\n')
     count = 0
@@ -174,9 +173,9 @@ if os.path.isfile(CONFIG_FILE):
             f_out.write(str(queries[i].Number) + SEP + docs + SEP +
                         computeVotes(votes) + '\n')
             count += 1
-    logger.info('Foram exportados ' + str(count) + ' registros para ' +
-                f_esperados)
+    logger.info('Exported ' + str(count) + ' records to ' + f_esperados)
+    logger.info('Finished %s' % __file__)
 else:
-    logger.error('O arquivo PC.CFG não foi localizado!')
-    print('O arquivo PC.CFG não foi localizado. Execução abortada!')
-logger.info('Finished %s' % __file__)
+    logger.error(CONFIG_FILE + ' not found!')
+    print(CONFIG_FILE + ' not found! Execution aborted.')
+    logger.error('Execution aborted.')

@@ -5,8 +5,9 @@ Created on Wednesday, june 28th, 2017
 @title:  IMIR - In Memory Information Retrieval - Gerador de Lista Invertida
 @author: Rafael Nunes - rnunes@cos.ufrj.br
 """
-# Gerador de Lista Invertida - A função desse módulo é criar as listas invertidas simples.
-# TODO: 1) O Gerador Lista Invertida deverá ler um arquivo de configuração
+# Gerador de Lista Invertida - A função desse módulo é criar as listas
+#                              invertidas simples.
+# DONE: 1) O Gerador Lista Invertida deverá ler um arquivo de configuração
 # a. O nome do arquivo é GLI.CFG
 # b. Ele contém dois tipos de instruções
 #   i. LEIA=<nome de arquivo>
@@ -15,27 +16,36 @@ Created on Wednesday, june 28th, 2017
 #  iv. Deve haver uma e apenas uma instrução ESCREVA
 #   v. A instrução ESCREVA aparece depois de todas as instruções LEIA
 
-# TODO: 2) O Gerador Lista Invertida deverá ler um conjunto de arquivos em formato XML
-# a. Os arquivos a serem lidos serão indicados pela instrução LEIA no arquivo de configuração
+# DONE: 2) O Gerador Lista Invertida deverá ler um conjunto de arquivos em
+# formato XML
+# a. Os arquivos a serem lidos serão indicados pela instrução LEIA no arquivo
+#    de configuração
 # b. O formato é descrito pelo arquivo cfc2.dtd.
 # c. O conjunto de arquivos será definido por um arquivo de configuração
 # d. Os arquivos a serem lidos são os fornecidos na coleção
 
-# TODO: 3) Só serão usados os campos RECORDNUM, que contém identificador do texto e ABSTRACT, que contém o texto a ser classificado
-# a. Atenção: Se o registro não contiver o campo ABSTRACT deverá ser usado o campo EXTRACT
+# DONE: 3) Só serão usados os campos RECORDNUM, que contém identificador do
+#          texto e ABSTRACT, que contém o texto a ser classificado
+# a. Atenção: Se o registro não contiver o campo ABSTRACT deverá ser usado o
+#             campo EXTRACT
 
-# TODO: 4) O Gerador Lista Invertida deverá gerar um arquivo
-# a. O arquivo a ser gerado será indicado na instrução ESCREVA do arquivo de configuração
+# DONE: 4) O Gerador Lista Invertida deverá gerar um arquivo
+# a. O arquivo a ser gerado será indicado na instrução ESCREVA do arquivo de
+#    configuração
 # b. O arquivo deverá ser no formato cvs
 #   i. O caractere de separação será o “;”, ponto e vírgula
 # c. Cada linha representará uma palavra
-# d. O primeiro campo de cada linha conterá a palavra em letras maiúsculas, sem acento
-# e. O segundo campo de cada linha apresentará uma lista (Python) de identificadores de documentos onde a palavra aparece
-# f. Se uma palavra aparece mais de uma vez em um documento, o número do documento aparecerá o mesmo número de vezes na lista
+# d. O primeiro campo de cada linha conterá a palavra em letras maiúsculas,
+#    sem acento
+# e. O segundo campo de cada linha apresentará uma lista (Python) de
+#    identificadores de documentos onde a palavra aparece
+# f. Se uma palavra aparece mais de uma vez em um documento, o número do
+#    documento aparecerá o mesmo número de vezes na lista
 # g. Exemplo de uma linha:
 #   i. FIBROSIS ; [1,2,2,3,4,5,10,15,21,21,21]
 
-# TODO: 5) Todos os módulos devem possuir um LOG que permita pelo menos a um programador posterior, usando o módulo logging de Python:
+# DONE: 5) Todos os módulos devem possuir um LOG que permita pelo menos a um
+# programador posterior, usando o módulo logging de Python:
 # 1. Identificar quando iniciaram suas operações
 # 2. Identificar quando iniciam cada parte de seu processamento
 # a. Ler arquivo de configuração
@@ -46,8 +56,12 @@ Created on Wednesday, june 28th, 2017
 # 6. Identificar erros no processamento, caso aconteçam.
 
 import os
+import re
+import operator
 import logging as log
 import xml.etree.cElementTree as ET
+from nltk.corpus import stopwords
+if not stopwords: nltk.download('stopwords')
 
 os.chdir('/Users/rafaenune/Documents/PESC-EDC/COS738 - Busca e Recuperação '
          'da Informação/GitHub/')
@@ -103,102 +117,157 @@ def computeVotes(votes):
 
 logger.info('Started %s' % __file__)
 files = []
+count = 0
 if os.path.isfile(CONFIG_FILE):
-    logger.info('Acessando ' + CONFIG_FILE + '...')
+    logger.info('Accessing ' + CONFIG_FILE + '...')
     for line in open(CONFIG_FILE, 'r'):
         if line.rstrip('\n').split('=')[0] == 'LEIA':
             files.append(line.rstrip('\n').split('=')[1])
+            count += 1
         elif line.rstrip('\n').split('=')[0] == 'ESCREVA':
             file_out = line.rstrip('\n').split('=')[1]
+            logger.info('Gracefully stopped reading configuration file ' +
+                        CONFIG_FILE + ', ESCREVA parameter found.')
             break
         else:
-            logger.error('Detectado parâmetro inválido no arquivo de '
-                         'configuração')
+            logger.error('Invalid parameter found reading configuration. ')
+    if count > 0: logger.info('Found %d .xml files to parse' % count)
 
     if files and file_out:
-        logger.info('Parâmetros lidos com sucesso!')
+        logger.info('All set! Successfully read configuration!')
     else:
-        logger.error('Falha na carga dos parâmetros de configuração!')
+        logger.error('Error reading configuration files!')
 
-    logger.info('Processando os .xmls...')
+    logger.info('Parsing .xmls...')
+    total_count = 0
+    total_fails = 0
     for file in files:
+        count = 0
+        fails = 0
+        logger.info('Parsing file %s' % file)
         tree = ET.parse(file)
         root = tree.getroot()
         if root:
             for RECORD in root.findall('RECORD'):
                 paper = paperRecords()
-                paper.PaperNum = RECORD.find('PAPERNUM').text
+                count += 1
+                try:
+                    paper.PaperNum = RECORD.find('PAPERNUM').text
+                except TypeError:
+                    logger.warning('Missing PAPERNUM attribute')
+                    pass
                 try:
                     for cite in RECORD.find('CITATIONS'):
                         paper.Citations.append(cite.attrib)
-                except:
-                    logger.warning('O paper número: ' + paper.PaperNum +
-                                   ' no arquivo: ' + file + ' não tem'
-                                   ' nenhuma citação.')
+                except TypeError:
+                    # logger.warning('Record: ' + paper.PaperNum +
+                    #                ' at file: ' + file + ' has none'
+                    #                ' citations.')
                     pass
-                paper.RecordNum = int(RECORD.find('RECORDNUM').text)
-                paper.MedlineNum = int(RECORD.find('MEDLINENUM').text)
-                for item in RECORD.find('AUTHORS'):
-                    paper.Authors.append(item.text)
-                paper.Title = RECORD.find('TITLE').text
-                words = paper.Title.split()
-                paper.Title = ' '.join(words).upper()
-                paper.Source = RECORD.find('SOURCE').text
-                for topic in RECORD.find('MAJORSUBJ'):
-                    paper.MajorSubJ_Topics.append(topic.text)
-                for topic in RECORD.find('MINORSUBJ'):
-                    paper.MinorSubJ_Topics.append((topic.text))
+                try:
+                    paper.RecordNum = int(RECORD.find('RECORDNUM').text)
+                except TypeError:
+                    logger.error('Missing RECORDNUM attribute')
+                    fails += 1
+                    continue
+                try:
+                    paper.MedlineNum = int(RECORD.find('MEDLINENUM').text)
+                except TypeError:
+                    # logger.warning('Missing MEDLINENUM attribute')
+                    pass
+                try:
+                    for author in RECORD.find('AUTHORS'):
+                        paper.Authors.append(author.text)
+                except TypeError:
+                    # logger.warning('No authors found')
+                    pass
+                try:
+                    paper.Title = RECORD.find('TITLE').text
+                    words = paper.Title.split()
+                    paper.Title = ' '.join(words).lower()
+                except TypeError:
+                    # logger.warning('Record has no title')
+                    pass
+                try:
+                    paper.Source = RECORD.find('SOURCE').text
+                except TypeError:
+                    # logger.warning('Missing SOURCE attribute')
+                    pass
+                try:
+                    for topic in RECORD.find('MAJORSUBJ'):
+                        paper.MajorSubJ_Topics.append(topic.text)
+                except TypeError:
+                    # logger.warning('MIssing MAJORSUBJ attribute')
+                    pass
+                try:
+                    for topic in RECORD.find('MINORSUBJ'):
+                        paper.MinorSubJ_Topics.append((topic.text))
+                except TypeError:
+                    # logger.warning('Missing MINORSUBJ attribute')
+                    pass
                 try:
                     paper.Abstract = RECORD.find('ABSTRACT').text
-                except:
-                    logger.warning('O paper número: ' + paper.PaperNum +
-                                   ' no arquivo: ' + file + ' não tem'
-                                   ' ABSTRACT.')
-                    pass
-                try:
-                    paper.Abstract = RECORD.find('EXTRACT').text
-                except:
-                    logger.info('O paper número: ' + paper.PaperNum +
-                                   ' no arquivo: ' + file + ' não tem'
-                                   ' EXTRACT.')
-                    pass
-                words = paper.Abstract.split()
-                paper.Abstract = ' '.join(words).upper()
+                except AttributeError:
+                    # logger.warning('Record: ' + paper.PaperNum +
+                    #                ' at file: ' + file + ' has no'
+                    #                ' ABSTRACT. Searching for EXTRACT...')
+                    try:
+                        paper.Abstract = RECORD.find('EXTRACT').text
+                    except:
+                        logger.error('There is no ABSTRACT nor EXTRACT at '
+                                     'record %s of file %s, ignoring record'
+                                     % (paper.PaperNum, file))
+                        fails += 1
+                        continue
+                finally:
+                    words = paper.Abstract.split()
+                    paper.Abstract = ' '.join(words).lower()
                 try:
                     for cite in RECORD.find('REFERENCES'):
                         paper.References.append(cite.attrib)
                 except:
+                    # logger.warning('Record: ' + paper.PaperNum +
+                    #                ' at file: ' + file + ' has none'
+                    #                ' references.')
                     pass
                 papers.append(paper)
-                print(papers[len(papers)-1])
-            logger.info('O processamento leu ' + str(len(papers)) +
-                        ' papers no arquivo ' + file)
+            logger.info('%s - %d records successfully imported, '
+                        '%d records ignored => total parsed: %d'
+                        % (file, count-fails, fails, count))
         else:
-            logger.error('Houve falha no processamento do arquivo ' + file)
+            logger.error('Failed parsing file ' + file)
+        total_count += count
+        total_fails += fails
+    logger.info('Parsed all .xmls - Successfully imported %d records out of'
+                ' %d parsed.' % (len(papers), total_count))
+    logger.info('Sorting papers array...')
+    papers = sorted(papers, key = operator.attrgetter('RecordNum'))
+    logger.info('Papers array sorted by RecordNum.')
 
-    # logger.info('Exportando todas as queries para .csv')
-    # f_out = open(f_consultas, 'w', encoding = 'utf-8')
-    # f_out.write('QueryNumber' + SEP + 'QueryText\n')
-    # count = 0
-    # for i in range(0, len(queries)):
-    #     f_out.write(str(queries[i].Number) + SEP + queries[i].Text + '\n')
-    #     count += 1
-    # logger.info('Foram exportados ' + str(count) + ' registros para ' +
-    #             f_consultas)
-    #
-    # logger.info('Exportando os votos de cada documento para .csv')
-    # f_out = open(f_esperados, 'w', encoding = 'utf-8')
-    # f_out.write('QueryNumber' + SEP + 'DocNumber' + SEP + 'DocVotes\n')
-    # count = 0
-    # for i in range(0, len(queries)):
-    #     for docs, votes in queries[i].Records.items():
-    #         f_out.write(str(queries[i].Number) + SEP + docs + SEP +
-    #                     computeVotes(votes) + '\n')
-    #         count += 1
-    # logger.info('Foram exportados ' + str(count) + ' registros para ' +
-    #             f_esperados)
+    logger.info('Generating inverted index and saving to %s...' % file_out)
+    index = dict()
+    stop_words = set(stopwords.words('english'))
+    for i in range(0, len(papers)):
+        words = re.sub('[^a-zA-Z]', ' ', papers[i].Abstract)
+        words = words.split()
+        words = [word.upper() for word in words if not word in stop_words
+                 and len(word) > 2]
+        for word in words:
+            if word in index:
+                index[word].append(papers[i].RecordNum)
+            else:
+                index[word] = [papers[i].RecordNum]
+
+    logger.info('Inverted index generated in memory'
+                ' with %d words.' % len(index))
+    f_out = open(file_out, 'w', encoding = 'utf-8')
+    f_out.write('Word' + SEP + 'Documents\n')
+    for word, docs in sorted(index.items()):
+        f_out.write(str(word) + SEP + str(docs) + '\n')
+    f_out.close()
+    logger.info('Inverted index saved as %s' %file_out)
+    logger.info('Finished %s' % __file__)
 else:
-    logger.error('O arquivo ' + CONFIG_FILE + ' não foi localizado!')
-    print('O arquivo ' + CONFIG_FILE + ' não foi localizado. Execução '
-                                       'abortada!')
-logger.info('Finished %s' % __file__)
+    logger.error(CONFIG_FILE + ' not found!')
+    print(CONFIG_FILE + ' not found! Execution aborted.')
+    logger.error('Execution aborted.')
