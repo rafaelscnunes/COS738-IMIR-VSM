@@ -72,6 +72,7 @@ log.basicConfig(level=log.DEBUG,
                 filemode='w')
 CONFIG_FILE = 'GLI.CFG'
 SEP = ';'
+MIN_WORD_LENGHT = 2
 logger = log.getLogger(__file__.split('/')[-1])
 papers = []
 
@@ -106,13 +107,6 @@ class paperRecords:
                                            self.MinorSubJ_Topics,
                                            self.Abstract,
                                            self.References)
-
-
-def computeVotes(votes):
-    evaluation = 0
-    for i in range(0, len(votes)):
-        evaluation = evaluation + int(votes[i])
-    return(str(evaluation))
 
 
 logger.info('Started %s' % __file__)
@@ -251,7 +245,7 @@ if os.path.isfile(CONFIG_FILE):
         words = re.sub('[^a-zA-Z]', ' ', papers[i].Abstract)
         words = words.split()
         words = [word.upper() for word in words if not word in stop_words
-                 and len(word) > 2]
+                 and len(word) >= MIN_WORD_LENGHT]
         for word in words:
             if word in index:
                 index[word].append(papers[i].RecordNum)
