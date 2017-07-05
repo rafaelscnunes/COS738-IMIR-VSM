@@ -44,6 +44,7 @@ Created on Wednesday, june 28th, 2017
 #    palavras, de acordocom o programa sendo usado
 # 6. Identificar erros no processamento, caso aconteçam.
 
+
 import os
 import vsm
 import math
@@ -51,20 +52,8 @@ import logging as log
 import pickle
 from pprint import pprint
 
-# from nltk.corpus import stopwords
-# if not stopwords: nltk.download('stopwords')
 
-
-os.chdir('/Users/rafaenune/Documents/PESC-EDC/COS738 - Busca e Recuperação '
-         'da Informação/GitHub/')
-log.basicConfig(level=log.DEBUG,
-                format='%(asctime)s|%(levelname)s|%(name)s|%(funcName)s'
-                       '|%(message)s',
-                filename=__file__.split('.')[0]+'.log',
-                filemode='w')
 logger = log.getLogger(__file__.split('/')[-1])
-
-
 CORPORA_FILE = 'corpora.csv'
 CONFIG_FILE = 'INDEX.CFG'
 SEP = ';'
@@ -137,6 +126,35 @@ if os.path.isfile(CONFIG_FILE):
     pickle.dump([w_ij, tf_idf], pickle_out)
     pickle_out.close()
     logger.info(('VSM (w_ij & tf_idf) saved at %s.' % f_escreva))
+
+
+    # print(w_ij['1236']['WITH'])
+    # aux = w_ij['1236']['WITH']
+    # if w_ij == tf_idf:
+    #     print('The dictionaries are identical')
+    # else:
+    #     print('The dictionaries are different!')
+    # w_ij['1236']['WITH'] = aux - 0.0000000004
+    # print(w_ij['1236']['WITH'])
+    # if w_ij == tf_idf:
+    #     print('The dictionaries are identical')
+    # else:
+    #     print('The dictionaries are different!')
+    # w_ij['1236']['WITH'] = aux
+    # print(w_ij['1236']['WITH'])
+    # if w_ij == tf_idf:
+    #     print('The dictionaries are identical')
+    # else:
+    #     print('The dictionaries are different!')
+
+    # from sklearn.feature_extraction.text import TfidfVectorizer
+    # sklearn_tfidf = TfidfVectorizer(norm = 'l2', min_df = 0, use_idf = True,
+    #                                 smooth_idf = False, sublinear_tf = True,
+    #                                 tokenizer = vsm.tokenizer())
+    # sklearn_representation = sklearn_tfidf.fit_transform([
+    #     text[corpus] corpus in corpora])
+
+
     logger.info('Finished %s' % __file__)
 else:
     logger.error(CONFIG_FILE + ' not found!')

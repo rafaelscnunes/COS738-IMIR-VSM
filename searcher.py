@@ -56,24 +56,13 @@ import re
 import logging as log
 import math
 import pickle
+from pprint import pprint
+import heapq
 
-# from nltk.corpus import stopwords
-# if not stopwords: nltk.download('stopwords')
 
-
-# os.chdir('/Users/rafaenune/Documents/PESC-EDC/COS738 - Busca e Recuperação '
-#          'da Informação/GitHub/')
-log.basicConfig(level=log.DEBUG,
-                format='%(asctime)s|%(levelname)s|%(name)s|%(funcName)s'
-                       '|%(message)s',
-                filename=__file__.split('.')[0]+'.log',
-                filemode='w')
 logger = log.getLogger(__file__.split('/')[-1])
-
-
 CONFIG_FILE = 'BUSCA.CFG'
 SEP = ';'
-count = 0
 
 
 logger.info('Started %s' % __file__)
@@ -98,9 +87,27 @@ if os.path.isfile(CONFIG_FILE):
 
     logger.info('Reading Vector Space Model form %s...' % f_vsm)
     pickle_in = open(f_vsm, 'rb')
-    w_ij_documents = pickle.load(pickle_in)
-    # print(w_ij_documents)
-    # print(len(w_ij_documents))
+    w_ij_inverse_index, tf_idf_corpora = pickle.load(pickle_in)
+    # print(w_ij_inverse_index)
+    # print(tf_idf_corpora)
+    # print(w_ij_inverse_index['1236']['WITH'])
+    # aux = w_ij_inverse_index['1236']['WITH']
+    # if w_ij_inverse_index == tf_idf_corpora:
+    #     print('The dictionaries are identical')
+    # else:
+    #     print('The dictionaries are different!')
+    # w_ij_inverse_index['1236']['WITH'] = aux - 0.0000000004
+    # print(w_ij_inverse_index['1236']['WITH'])
+    # if w_ij_inverse_index == tf_idf_corpora:
+    #     print('The dictionaries are identical')
+    # else:
+    #     print('The dictionaries are different!')
+    # w_ij_inverse_index['1236']['WITH'] = aux
+    # print(w_ij_inverse_index['1236']['WITH'])
+    # if w_ij_inverse_index == tf_idf_corpora:
+    #     print('The dictionaries are identical')
+    # else:
+    #     print('The dictionaries are different!')
     logger.info('Vector Space Model read successfully!')
 
     logger.info('Reading queries form %s...' % f_consultas)
@@ -115,16 +122,31 @@ if os.path.isfile(CONFIG_FILE):
     logger.info('Queries read successfully!')
 
     logger.info('Creating vector space model for the queries...')
-    queries_vsm = vsm.tfn_table(queries)
-    queries_vsm = vsm.w_ij(queries_vsm)
-    print(queries_vsm)
-    # print(len(queries_vsm))
+    tf_idf_queries = vsm.tf_idf(queries, weight1 = 0.5, weight2 = 0.5)
+    # print(tf_idf_queries)
+    # print(len(tf_idf_queries))
     logger.info('Queries VSM all w_ij for the queries were created.')
 
     logger.info('Running queries...')
-    logger.info('%d queries run!' % count)
+    searchs = {}
+    for query in tf_idf_queries:
+        for corpus in tf_idf_corpora:
+            if query not in searchs:
+                searchs[query] = {}
+            if corpus not in searchs[query]:
+                searchs[query][corpus] = vsm.cos_similarity(
+                                         tf_idf_queries[query],
+                                         tf_idf_corpora[corpus])
 
+    # print(heapq.nlargest(5, searchs, key=searchs.get()))
 
+    # print(searchs.keys())
+    # print(searchs.items())
+
+    # print(sorted(searchs.values()))
+    # for i in range(1, len(searchs)):
+    #     print('Query %d: %s' % (i, searchs[str(i)]))
+    logger.info('%d queries run!' % len(searchs))
     logger.info('Finished %s' % __file__)
 else:
     logger.error(CONFIG_FILE + ' not found!')

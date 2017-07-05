@@ -8,15 +8,29 @@ Created on 04/Jul/2017 with PyCharm Community Edition
 """
 
 import re
+import os
 import math
 import logging as log
 from pprint import pprint
 
-log.basicConfig(level=log.DEBUG,
-                format='%(asctime)s|%(levelname)s|%(name)s|%(funcName)s'
-                       '|%(message)s',
-                filename=__file__.split('.')[0]+'.log',
-                filemode='w')
+os.chdir('/Users/rafaenune/Documents/PESC-EDC/COS738 - Busca e Recuperação '
+         'da Informação/GitHub/')
+f_log = __file__.split('.')[0]+'.log'
+CONFIG_FILE = 'log.conf'
+if os.path.isfile(CONFIG_FILE):
+    for line in open(CONFIG_FILE, 'r'):
+        if line.rstrip('\n').split('=')[0] == 'LOG_FILE':
+            f_log = line.rstrip('\n').split('=')[1]
+            break
+        else:
+            print('Invalid parameter found reading configuration.')
+    else:
+        print('Error reading configuration files!')
+log.basicConfig(level = log.DEBUG,
+                format = '%(asctime)s|%(levelname)s|%(name)s|%(funcName)s'
+                         '|%(message)s',
+                filename = f_log,
+                filemode = 'a')
 logger = log.getLogger(__file__.split('/')[-1])
 
 
@@ -128,11 +142,15 @@ def tf_corpora(content = {'doc':'no content detected'}, stop_words = [],
 
 
 def tfn_corpora(content = {'doc':'no content detected'}, stop_words = [],
-                 min_word_length = 2):
+                 min_word_length = 2, weight1 = 0, weight2 = 1):
     """ Get a dictionary with {dj: 'text'} and returns another
         dictionary {dj : {ki : f_ij}} with normalized terms frequency (f_ij)
         by dj. Normalization is calculated based on the maximum frequency of
         term ki in a given document dj.
+
+        weight1 & weight2: adjusts for normalization.
+        for queries: weight1 = 0.5 and weight2 = 0.5
+        for corpora: weight1 = 0 and weight2 = 1
     """
     tf = tf_corpora(content)
     max_freq = max_freq_vector(tf)
@@ -144,7 +162,7 @@ def tfn_corpora(content = {'doc':'no content detected'}, stop_words = [],
                 tfn[doc] = {}
             if word not in tfn[doc]:
                 tfn[doc][word] = {}
-            tfn[doc][word] = tf[doc][word]/max_freq[doc]
+            tfn[doc][word] = weight1 + (weight2*(tf[doc][word]/max_freq[doc]))
     logger.info('tfn table generated with %d document vectors' % len(tfn))
     return(tfn)
 
@@ -191,7 +209,6 @@ def idf_tokenized(tokenized_corpora):
         # idf_values[tkn] = 1 + math.log(len(tokenized_corpora)/(sum(
         #         contains_token)))
     return idf_values
-
 
 
 def read_inverse_index_to_tf(file, sep = ';', min = 2):
@@ -303,7 +320,7 @@ def normalize_tf(tf = {}, norm = 'max', weight = 0.5):
     return(tfn)
 
 
-def tf_idf(corpora, mode = 'dense', norm = 'max', weight = 0.5):
+def tf_idf(corpora, mode = 'dense', norm = 'max', weight1 = 0, weight2 = 1):
     """ TF_IDF (Term Frequency x Inverse Document Frequency)
         corpora: {'di' : 'text content'}
         mode:
@@ -328,7 +345,7 @@ def tf_idf(corpora, mode = 'dense', norm = 'max', weight = 0.5):
         # pprint(idf)
 
         logger.info('Generating tnf of the corpora using tnf_corpora()...')
-        tfn = tfn_corpora(corpora)
+        tfn = tfn_corpora(corpora, weight1 = weight1, weight2 = weight2)
         logger.info(('tfn_table calculated for %d corpus.' % len(tfn)))
         # pprint(tfn)
 
@@ -379,3 +396,24 @@ def tf_idf(corpora, mode = 'dense', norm = 'max', weight = 0.5):
     else:
         logger.info('Invalid mode indicated... Nothing done.')
         return(1)
+
+def cosine_similarity(vector1, vector2):
+        dot_product = sum(p * q for p, q in zip(vector1, vector2))
+        magnitude = math.sqrt(sum([val ** 2 for val in vector1])) * math.sqrt(
+            sum([val ** 2 for val in vector2]))
+        if not magnitude:
+            return(0)
+        return(dot_product / magnitude)
+
+
+def cos_similarity(dict1, dict2):
+    dot_product = 0
+    for t1 in dict1:
+        for t2 in dict2:
+            if t1 in dict2 and t2 in dict1:
+                dot_product += dict1[t1]*dict2[t2]
+    magnitude = math.sqrt(sum([dict1[term]**2 for term in dict1]))\
+                * math.sqrt(sum([dict2[term]**2 for term in dict2]))
+    if not magnitude:
+        return (0)
+    return(dot_product/magnitude)

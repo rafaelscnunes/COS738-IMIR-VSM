@@ -62,17 +62,18 @@ import logging as log
 import xml.etree.cElementTree as ET
 from nltk.corpus import stopwords
 if not stopwords: nltk.download('stopwords')
+import vsm
 
 # os.chdir('/Users/rafaenune/Documents/PESC-EDC/COS738 - Busca e Recuperação '
 #          'da Informação/GitHub/')
-log.basicConfig(level=log.DEBUG,
-                format='%(asctime)s|%(levelname)s|%(name)s|%(funcName)s'
-                       '|%(message)s',
-                filename=__file__.split('.')[0]+'.log',
-                filemode='w')
+# log.basicConfig(level=log.DEBUG,
+#                 format='%(asctime)s|%(levelname)s|%(name)s|%(funcName)s'
+#                        '|%(message)s',
+#                 filename=__file__.split('.')[0]+'.log',
+#                 filemode='w')
+
+
 logger = log.getLogger(__file__.split('/')[-1])
-
-
 CORPORA_FILE = 'corpora.csv'
 CONFIG_FILE = 'GLI.CFG'
 SEP = ';'

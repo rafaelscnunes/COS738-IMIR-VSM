@@ -72,17 +72,20 @@ Created on Wednesday, june 28th, 2017
 import os
 import logging as log
 import xml.etree.cElementTree as ET
+import vsm
 
 # os.chdir('/Users/rafaenune/Documents/PESC-EDC/COS738 - Busca e Recuperação '
 #          'da Informação/GitHub/')
-log.basicConfig(level=log.DEBUG,
-                format='%(asctime)s|%(levelname)s|%(name)s|%(funcName)s'
-                       '|%(message)s',
-                filename=__file__.split('.')[0]+'.log',
-                filemode='w')
+# log.basicConfig(level=log.DEBUG,
+#                 format='%(asctime)s|%(levelname)s|%(name)s|%(funcName)s'
+#                        '|%(message)s',
+#                 filename=__file__.split('.')[0]+'.log',
+#                 filemode='w')
+
+
+logger = log.getLogger(__file__.split('/')[-1])
 CONFIG_FILE = 'PC.CFG'
 SEP = ';'
-logger = log.getLogger(__file__.split('/')[-1])
 queries = []
 
 
