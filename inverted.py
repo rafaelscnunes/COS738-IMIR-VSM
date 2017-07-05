@@ -63,18 +63,24 @@ import xml.etree.cElementTree as ET
 from nltk.corpus import stopwords
 if not stopwords: nltk.download('stopwords')
 
-os.chdir('/Users/rafaenune/Documents/PESC-EDC/COS738 - Busca e Recuperação '
-         'da Informação/GitHub/')
+# os.chdir('/Users/rafaenune/Documents/PESC-EDC/COS738 - Busca e Recuperação '
+#          'da Informação/GitHub/')
 log.basicConfig(level=log.DEBUG,
                 format='%(asctime)s|%(levelname)s|%(name)s|%(funcName)s'
                        '|%(message)s',
                 filename=__file__.split('.')[0]+'.log',
                 filemode='w')
+logger = log.getLogger(__file__.split('/')[-1])
+
+
+CORPORA_EXP_FILE = 'corpora.csv'
 CONFIG_FILE = 'GLI.CFG'
 SEP = ';'
 MIN_WORD_LENGHT = 2
-logger = log.getLogger(__file__.split('/')[-1])
-papers = []
+STOPWORDS = 0
+# 1 - homemade stop_words list;
+# 2 - nltk stop_words;
+# any other value - no use of stop_words.
 
 
 class paperRecords:
@@ -111,9 +117,10 @@ class paperRecords:
 
 logger.info('Started %s' % __file__)
 files = []
+papers = []
 count = 0
 if os.path.isfile(CONFIG_FILE):
-    logger.info('Accessing ' + CONFIG_FILE + '...')
+    logger.info('Reading configuration from ' + CONFIG_FILE + '...')
     for line in open(CONFIG_FILE, 'r'):
         if line.rstrip('\n').split('=')[0] == 'LEIA':
             files.append(line.rstrip('\n').split('=')[1])
@@ -128,7 +135,7 @@ if os.path.isfile(CONFIG_FILE):
     if count > 0: logger.info('Found %d .xml files to parse' % count)
 
     if files and file_out:
-        logger.info('All set! Successfully read configuration!')
+        logger.info('All set! Configuration successfully read!')
     else:
         logger.error('Error reading configuration files!')
 
@@ -240,7 +247,16 @@ if os.path.isfile(CONFIG_FILE):
 
     logger.info('Generating inverted index and saving to %s...' % file_out)
     index = dict()
-    stop_words = set(stopwords.words('english'))
+    if STOPWORDS == 1:
+        stop_words = ['this','not','from','how','what','why','when','where',
+                      'which', 'who', 'with']
+        logger.info('Using homemade stop_words list.')
+    elif STOPWORDS == 2:
+        stop_words = set(stopwords.words('english'))
+        logger.info('Using nltk standard stop_words.')
+    else:
+        stop_words = []
+        logger.info('Not using stop_words.')
     for i in range(0, len(papers)):
         words = re.sub('[^a-zA-Z]', ' ', papers[i].Abstract)
         words = words.split()
@@ -251,9 +267,9 @@ if os.path.isfile(CONFIG_FILE):
                 index[word].append(papers[i].RecordNum)
             else:
                 index[word] = [papers[i].RecordNum]
-
     logger.info('Inverted index generated in memory'
                 ' with %d words.' % len(index))
+
     f_out = open(file_out, 'w', encoding = 'utf-8')
     f_out.write('Word' + SEP + 'Documents\n')
     for word, docs in sorted(index.items()):
@@ -261,6 +277,15 @@ if os.path.isfile(CONFIG_FILE):
     f_out.close()
     logger.info('Inverted index saved as %s' %file_out)
     logger.info('Finished %s' % __file__)
+
+    logger.info('Exporting corpora {\'RecordNum\' : \'Abstract\'} to %s'
+                % CORPORA_EXP_FILE)
+    f_out = open('corpora.csv', 'w', encoding = 'utf-8')
+    f_out.write('corpus' + SEP + 'text')
+    for i in range(0, len(papers)):
+        f_out.write(str(papers[i].RecordNum) + SEP + papers[i].Abstract + '\n')
+    f_out.close()
+
 else:
     logger.error(CONFIG_FILE + ' not found!')
     print(CONFIG_FILE + ' not found! Execution aborted.')

@@ -73,8 +73,8 @@ import os
 import logging as log
 import xml.etree.cElementTree as ET
 
-os.chdir('/Users/rafaenune/Documents/PESC-EDC/COS738 - Busca e Recuperação '
-         'da Informação/GitHub/')
+# os.chdir('/Users/rafaenune/Documents/PESC-EDC/COS738 - Busca e Recuperação '
+#          'da Informação/GitHub/')
 log.basicConfig(level=log.DEBUG,
                 format='%(asctime)s|%(levelname)s|%(name)s|%(funcName)s'
                        '|%(message)s',
@@ -112,29 +112,23 @@ def computeVotes(votes):
 
 logger.info('Started %s' % __file__)
 if os.path.isfile(CONFIG_FILE):
-    logger.info('Accessing ' + CONFIG_FILE + '...')
-    f_config = open(CONFIG_FILE, 'r')
-    line1 = f_config.readline().rstrip('\n').split('=')
-    line2 = f_config.readline().rstrip('\n').split('=')
-    line3 = f_config.readline().rstrip('\n').split('=')
-    f_config.close()
-    if line1[0] == 'LEIA':
-        f_leia = line1[1]
-        if line2[0] == 'CONSULTAS':
-            f_consultas = line2[1]
-            if line3[0] == 'ESPERADOS':
-                f_esperados = line3[1]
-            else:
-                logger.error('Parameter ESPERADOS not found.')
+    logger.info('Reading configuration from ' + CONFIG_FILE + '...')
+    for line in open(CONFIG_FILE, 'r'):
+        if line.rstrip('\n').split('=')[0] == 'LEIA':
+            f_leia = line.rstrip('\n').split('=')[1]
+        elif line.rstrip('\n').split('=')[0] == 'CONSULTAS':
+            f_consultas = line.rstrip('\n').split('=')[1]
+        elif line.rstrip('\n').split('=')[0] == 'ESPERADOS':
+            f_esperados = line.rstrip('\n').split('=')[1]
+            logger.info('Gracefully stopped reading configuration file ' +
+                        CONFIG_FILE + ', ESPERADOS parameter found.')
+            break
         else:
-            logger.error('Parameter CONSULTAS not found.')
-    else:
-        logger.error('Parameter LEIA not found.')
-
+            logger.error('Invalid parameter found reading configuration.')
     if f_leia and f_consultas and f_esperados:
-        logger.info('Parameters read successfully!')
+        logger.info('All set! Configuration successfully read!')
     else:
-        logger.error('Fail reading configuration parameters!')
+        logger.error('Error reading configuration files!')
 
     logger.info('Parsing .xml...')
     tree = ET.parse(f_leia)
@@ -162,6 +156,7 @@ if os.path.isfile(CONFIG_FILE):
     for i in range(0, len(queries)):
         f_out.write(str(queries[i].Number) + SEP + queries[i].Text + '\n')
         count += 1
+    f_out.close()
     logger.info('Exported ' + str(count) + ' records to ' + f_consultas)
 
     logger.info('Exporting document\'s votes to .csv')
@@ -173,6 +168,7 @@ if os.path.isfile(CONFIG_FILE):
             f_out.write(str(queries[i].Number) + SEP + docs + SEP +
                         computeVotes(votes) + '\n')
             count += 1
+    f_out.close()
     logger.info('Exported ' + str(count) + ' records to ' + f_esperados)
     logger.info('Finished %s' % __file__)
 else:

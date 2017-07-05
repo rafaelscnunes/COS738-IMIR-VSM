@@ -45,11 +45,10 @@ Created on Wednesday, june 28th, 2017
 # 6. Identificar erros no processamento, caso aconteçam.
 
 import os
-import vsm
-import math
+import re
 import logging as log
+import math
 import pickle
-from pprint import pprint
 
 # from nltk.corpus import stopwords
 # if not stopwords: nltk.download('stopwords')
@@ -62,12 +61,9 @@ log.basicConfig(level=log.DEBUG,
                        '|%(message)s',
                 filename=__file__.split('.')[0]+'.log',
                 filemode='w')
-logger = log.getLogger(__file__.split('/')[-1])
-
-
 CONFIG_FILE = 'INDEX.CFG'
 SEP = ';'
-MIN_WORD_LENGTH = 2
+logger = log.getLogger(__file__.split('/')[-1])
 
 
 logger.info('Started %s' % __file__)
@@ -89,47 +85,127 @@ if os.path.isfile(CONFIG_FILE):
         logger.error('Error reading configuration files!')
 
     logger.info('Creating Vector Space Model...')
+    """ Using dense matrix, no zero value stored """
 
+    logger.info('Reading inverted list...')
+    inverted_list = {}
+    for line in open(f_leia, 'r'):
+        if line.lower() != 'word;documents\n':
+            word = line.rstrip('\n').split(SEP)[0]
+            word = word.upper()
+            word = re.sub('[^A-Z]', '', word)
+            docs = line.rstrip('\n').split(SEP)[1].lstrip('[').rstrip(']')\
+                   .replace(' ', '').split(',')
+            if len(word) >= 2: inverted_list[word] = docs
+    print(inverted_list)
+    print(len(inverted_list))
+    logger.info('Inverted list read.')
 
-    tf = vsm.read_inverse_index_to_tf(f_leia, SEP, MIN_WORD_LENGTH)
+    logger.info('Building TF...')
+    """ Term Frequency table
+        The number of times a term appears in a particular document """
+    tf = {}
+    count = 0
+    for word, docs in inverted_list.items():
+        count += 1
+        qtde = {}
+        for doc in docs:
+            if doc in qtde:
+                qtde[doc] += 1
+            else:
+                qtde[doc] = 1
+        for doc in qtde.keys():
+            if word in tf:
+                if doc in tf[word]:
+                    tf[word][doc] = qtde[doc]
+                else:
+                    tf[word][doc] = {}
+                    tf[word][doc] = qtde[doc]
+            else:
+                tf[word] = {}
+                tf[word][doc] = {}
+                tf[word][doc] = qtde[doc]
     # print(tf)
-    # print(len(tf))
+    # print('%d words imported from inverted index.' % count)
+    logger.info('TF built with %d words imported from inverted index.' % count)
 
-    tf_norm = vsm.normalize_tf(tf)
-    pprint(tf_norm)
-    pprint(len(tf_norm))
+    logger.info(('Evaluating max_freq of index terms...'))
+    """ Evaluate the maximum number of times each one of the terms appears
+        across all documents where the given term appears """
+    max_freq = {}
+    count = 0
+    for word, docs in tf.items():
+        count += 1
+        for doc in docs:
+            if word in max_freq:
+                if tf[word][doc] > max_freq[word]:
+                    max_freq[word] = tf[word][doc]
+            else:
+                max_freq[word] = tf[word][doc]
+    # print(max_freq)
+    # print('%d terms had the max_freq evaluated.' % count)
+    # print(len(max_freq))
+    logger.info('max_freq evaluated for %d words had the max_freq evaluated.'
+                % count)
 
-    logger.info('Evaluating ni...')
-    inv_tf = vsm.tf_to_itf(tf)
-    ni = {}
-    for word in inv_tf:
-        ni[word] = len(inv_tf[word])
-    # print(ni)
-    # print(len(ni))
-    logger.info('Evaluated ni for %d terms' % len(ni))
+    logger.info(('Normalizing TF...'))
+    """ Evaluate a real number between 0 and 1 to represent the relevance of 
+        a term in a document """
+    tf_norm = {}
+    for word, docs in tf.items():
+        for doc in docs:
+            if word not in tf_norm:
+                tf_norm[word] = {}
+            if doc not in tf_norm[word]:
+                tf_norm[word][doc] = {}
+            tf_norm[word][doc] = tf[word][doc]/max_freq[word]
+    # print(tf_norm)
+    # print(len(tf_norm))
+    logger.info('TF normalized for %d terms.' % len(tf_norm))
+
+    logger.info('Evaluating ni_docs...')
+    """ ni_docs is the number of documents in which the index term appears """
+    ni_docs = {}
+    for word in tf:
+        ni_docs[word] = len(set(tf[word]))
+    # print(ni_docs)
+    # print(len(ni_docs))
+    logger.info(('Evaluated ni_docs for %d terms' % len(ni_docs)))
+
+    logger.info('Evaluating N_docs...')
+    """ N is the total number of documents """
+    N_docs = {}
+    for word, docs in tf.items():
+        for doc in docs:
+            if doc not in N_docs:
+                N_docs[doc] = tf[word][doc]
+            else:
+                N_docs[doc] += tf[word][doc]
+    N = len(N_docs)
+    # print(N_docs)
+    # print(N)
+    logger.info(('Evaluated N = %d. And also the total number os terms in '
+                 'each doc.' % N))
 
     logger.info('Evaluating idf...')
     idf = {}
-    N = len(tf_norm)
-    for word in ni:
-        idf[word] = math.log(N/ni[word])
+    for word in ni_docs:
+        idf[word] = math.log10(N/ni_docs[word])
     # print(idf)
-    # print(len(idf))
-    logger.info('Evaluated idf for %d terms' % len(idf))
+    logger.info('Evaluated idf.')
 
     logger.info('Evaluating w_ij...')
     w_ij = {}
-    for doc, words in tf_norm.items():
-        for word in words:
-            if doc not in w_ij:
-                w_ij[doc] = {}
-            if word not in w_ij[doc]:
-                w_ij[doc][word] = {}
-            w_ij[doc][word] = tf_norm[doc][word]*idf[word]
+    for word, docs in tf_norm.items():
+        for doc in docs:
+            if word not in w_ij:
+                w_ij[word] = {}
+            if doc not in w_ij[word]:
+                w_ij[word][doc] = {}
+            w_ij[word][doc] = tf_norm[word][doc]*idf[word]
     # print(w_ij)
     # print(len(w_ij))
-    logger.info('w_ij evaluated for %d documents.' % len(w_ij))
-    logger.info('Vector Space Model created!')
+    logger.info('w_ij evaluated for %d terms.' % len(w_ij))
 
     logger.info('Saving Vector Space Model...')
     pickle_out = open(f_escreva,'wb')

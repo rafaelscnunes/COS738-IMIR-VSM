@@ -1,0 +1,5 @@
+source for [tfidf.ipyn].html :
+https://stanford.edu/~rjweiss/public_html/IRiSS2013/text2/notebooks/tfidf.html
+
+source for tfpdf.py :
+https://gist.github.com/anabranch/48c5c0124ba4e162b2e3
