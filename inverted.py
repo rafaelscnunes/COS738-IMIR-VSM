@@ -285,6 +285,9 @@ if os.path.isfile(CONFIG_FILE):
     for i in range(0, len(papers)):
         f_out.write(str(papers[i].RecordNum) + SEP + papers[i].Abstract + '\n')
     f_out.close()
+    logger.info('%s created with %d corpus.' % (CORPORA_EXP_FILE,
+                                                len(pappers)))
+
 
 else:
     logger.error(CONFIG_FILE + ' not found!')
