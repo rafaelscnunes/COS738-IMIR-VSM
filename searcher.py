@@ -17,9 +17,9 @@ Created on Wednesday, june 28th, 2017
 # b. CONSULTAS=<nome de arquivo>
 # c. RESULTADOS=<nome de arquivo>
 
-# TODO: 3) A busca deverá ser feita usando modelo vetorial
+# DONE: 3) A busca deverá ser feita usando modelo vetorial
 
-# TODO: 4) Cada palavra na consulta terá o peso 1
+# DONE: 4) Cada palavra na consulta terá o peso 1
 
 # TODO: 5) O arquivo de resultados deverá
 # a. Ser no formato .csv
@@ -63,7 +63,7 @@ import heapq
 logger = log.getLogger(__file__.split('/')[-1])
 CONFIG_FILE = 'BUSCA.CFG'
 SEP = ';'
-
+MIN_SIM = 0.5
 
 logger.info('Started %s' % __file__)
 if os.path.isfile(CONFIG_FILE):
@@ -137,16 +137,56 @@ if os.path.isfile(CONFIG_FILE):
                 searchs[query][corpus] = vsm.cos_similarity(
                                          tf_idf_queries[query],
                                          tf_idf_corpora[corpus])
+    # print(searchs)
 
-    # print(heapq.nlargest(5, searchs, key=searchs.get()))
+    logger.info('Bulding results list getting only documents with a cosine '
+                'similarity score equal or greater than %f%%.' % MIN_SIM)
+    results = []
+    for query, documents in searchs.items():
+        for doc in documents:
+            if searchs[query][doc] > MIN_SIM:
+                results.append([query, doc, searchs[query][doc]])
+    logger.info('Results list built.')
 
-    # print(searchs.keys())
-    # print(searchs.items())
+    # qtde_buscas = len(tf_idf_queries)
+    # qtde_documentos = len(tf_idf_corpora)
+    # limite_de_resultados = qtde_buscas*qtde_documentos
+    # qtde_resultados = len(results)
+    #
+    # print('%d consultas em %d documentos = %d resultados esperados.'
+    #       % (qtde_buscas, qtde_documentos, limite_de_resultados))
+    # print('O total de resultados encontrados foi %d' % qtde_resultados)
+    #
+    # if qtde_resultados <= limite_de_resultados:
+    #     print('Esse resultado está dentro da quantidade limite esperada!')
+    #
+    # print(results[0:25])
 
-    # print(sorted(searchs.values()))
-    # for i in range(1, len(searchs)):
-    #     print('Query %d: %s' % (i, searchs[str(i)]))
-    logger.info('%d queries run!' % len(searchs))
+    logger.info('Ranking results...')
+    def getKey1(item):
+        return(int(item[0]))
+    def getKey2(item):
+        return(item[2])
+    results = sorted(sorted(results,
+                     key = getKey2, reverse = True),
+                     key = getKey1, reverse = False)
+    logger.info('Ranking finished!')
+
+    # print(results[0:25])
+
+    logger.info('Saving results to %s file' % f_resultados)
+    f_out = open(f_resultados, 'w')
+    f_out.write('QueryNumber' + SEP + '[Rank, Document, Similarity]\n')
+    rank = 0
+    for i in range(0, len(results)-1):
+        f_out.write(results[i][0] + SEP +
+                    str([rank,int(results[i][1]),results[i][2]]) + '\n')
+        if results[i][0] == results[i+1][0]:
+            rank += 1
+        else:
+            rank = 0
+    f_out.close()
+    logger.info('Results successfully saved to %s.' % f_resultados)
     logger.info('Finished %s' % __file__)
 else:
     logger.error(CONFIG_FILE + ' not found!')
