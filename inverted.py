@@ -280,8 +280,8 @@ if os.path.isfile(CONFIG_FILE):
 
     logger.info('Exporting corpora {\'RecordNum\' : \'Abstract\'} to %s'
                 % CORPORA_EXP_FILE)
-    f_out = open('corpora.csv', 'w', encoding = 'utf-8')
-    f_out.write('corpus' + SEP + 'text')
+    f_out = open(CORPORA_EXP_FILE, 'w', encoding = 'utf-8')
+    f_out.write('corpus' + SEP + 'text\n')
     for i in range(0, len(papers)):
         f_out.write(str(papers[i].RecordNum) + SEP + papers[i].Abstract + '\n')
     f_out.close()
