@@ -55,8 +55,8 @@ from pprint import pprint
 # if not stopwords: nltk.download('stopwords')
 
 
-# os.chdir('/Users/rafaenune/Documents/PESC-EDC/COS738 - Busca e Recuperação '
-#          'da Informação/GitHub/')
+os.chdir('/Users/rafaenune/Documents/PESC-EDC/COS738 - Busca e Recuperação '
+         'da Informação/GitHub/')
 log.basicConfig(level=log.DEBUG,
                 format='%(asctime)s|%(levelname)s|%(name)s|%(funcName)s'
                        '|%(message)s',
