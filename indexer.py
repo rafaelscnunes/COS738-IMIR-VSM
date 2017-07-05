@@ -65,8 +65,10 @@ log.basicConfig(level=log.DEBUG,
 logger = log.getLogger(__file__.split('/')[-1])
 
 
+CORPORA_FILE = 'corpora.csv'
 CONFIG_FILE = 'INDEX.CFG'
 SEP = ';'
+ENCOD = 'utf-8'
 MIN_WORD_LENGTH = 2
 
 
@@ -89,16 +91,12 @@ if os.path.isfile(CONFIG_FILE):
         logger.error('Error reading configuration files!')
 
     logger.info('Creating Vector Space Model...')
-
-
     tf = vsm.read_inverse_index_to_tf(f_leia, SEP, MIN_WORD_LENGTH)
     # print(tf)
     # print(len(tf))
-
-    tf_norm = vsm.normalize_tf(tf)
-    pprint(tf_norm)
-    pprint(len(tf_norm))
-
+    tf_norm = vsm.normalize_tf(tf, norm = 'max', weight = 0.6)
+    # pprint(tf_norm)
+    # pprint(len(tf_norm))
     logger.info('Evaluating ni...')
     inv_tf = vsm.tf_to_itf(tf)
     ni = {}
@@ -107,17 +105,15 @@ if os.path.isfile(CONFIG_FILE):
     # print(ni)
     # print(len(ni))
     logger.info('Evaluated ni for %d terms' % len(ni))
-
-    logger.info('Evaluating idf...')
+    logger.info('Building idf...')
     idf = {}
     N = len(tf_norm)
     for word in ni:
         idf[word] = math.log(N/ni[word])
     # print(idf)
     # print(len(idf))
-    logger.info('Evaluated idf for %d terms' % len(idf))
-
-    logger.info('Evaluating w_ij...')
+    logger.info('idf built for %d terms' % len(idf))
+    logger.info('Creating VSM (w_ij) from inverse index at %s...' % f_leia)
     w_ij = {}
     for doc, words in tf_norm.items():
         for word in words:
@@ -128,15 +124,19 @@ if os.path.isfile(CONFIG_FILE):
             w_ij[doc][word] = tf_norm[doc][word]*idf[word]
     # print(w_ij)
     # print(len(w_ij))
-    logger.info('w_ij evaluated for %d documents.' % len(w_ij))
+    logger.info('w_ij built with %d corpus.' % len(w_ij))
+    logger.info('Creating VSM (tf_idf) from corpora at %s...' % CORPORA_FILE)
+    corpora = vsm.get_corpora(CORPORA_FILE, SEP, ENCOD)
+    tf_idf = vsm.tf_idf(corpora, mode = 'dense', norm = 'max')
+    # print(tf_idf)
+    # print(len(tf_idf))
+    logger.info('tf_idf built with %d corpus.' % len(tf_idf))
     logger.info('Vector Space Model created!')
-
-    logger.info('Saving Vector Space Model...')
+    logger.info('Saving VSM (w_ij & tf_idf)')
     pickle_out = open(f_escreva,'wb')
-    pickle.dump(w_ij, pickle_out)
+    pickle.dump([w_ij, tf_idf], pickle_out)
     pickle_out.close()
-    logger.info(('VSM saved at %s.' % f_escreva))
-
+    logger.info(('VSM (w_ij & tf_idf) saved at %s.' % f_escreva))
     logger.info('Finished %s' % __file__)
 else:
     logger.error(CONFIG_FILE + ' not found!')

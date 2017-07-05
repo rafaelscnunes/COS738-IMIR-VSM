@@ -73,7 +73,7 @@ log.basicConfig(level=log.DEBUG,
 logger = log.getLogger(__file__.split('/')[-1])
 
 
-CORPORA_EXP_FILE = 'corpora.csv'
+CORPORA_FILE = 'corpora.csv'
 CONFIG_FILE = 'GLI.CFG'
 SEP = ';'
 MIN_WORD_LENGHT = 2
@@ -184,7 +184,8 @@ if os.path.isfile(CONFIG_FILE):
                     pass
                 try:
                     paper.Title = RECORD.find('TITLE').text
-                    words = paper.Title.split()
+                    words = re.sub('[^a-zA-Z]', ' ', paper.Title)
+                    words = words.split()
                     paper.Title = ' '.join(words).lower()
                 except TypeError:
                     # logger.warning('Record has no title')
@@ -221,7 +222,8 @@ if os.path.isfile(CONFIG_FILE):
                         fails += 1
                         continue
                 finally:
-                    words = paper.Abstract.split()
+                    words = re.sub('[^a-zA-Z]', ' ', paper.Abstract)
+                    words = words.split()
                     paper.Abstract = ' '.join(words).lower()
                 try:
                     for cite in RECORD.find('REFERENCES'):
@@ -279,14 +281,14 @@ if os.path.isfile(CONFIG_FILE):
     logger.info('Finished %s' % __file__)
 
     logger.info('Exporting corpora {\'RecordNum\' : \'Abstract\'} to %s'
-                % CORPORA_EXP_FILE)
-    f_out = open(CORPORA_EXP_FILE, 'w', encoding = 'utf-8')
+                % CORPORA_FILE)
+    f_out = open(CORPORA_FILE, 'w', encoding = 'utf-8')
     f_out.write('corpus' + SEP + 'text\n')
     for i in range(0, len(papers)):
         f_out.write(str(papers[i].RecordNum) + SEP + papers[i].Abstract + '\n')
     f_out.close()
-    logger.info('%s created with %d corpus.' % (CORPORA_EXP_FILE,
-                                                len(pappers)))
+    logger.info('%s created with %d corpus.' % (CORPORA_FILE,
+                                                len(papers)))
 
 
 else:

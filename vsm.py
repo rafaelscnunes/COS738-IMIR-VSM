@@ -43,6 +43,7 @@ def tokenizer(corpus = str('no content detected'), stop_words = list(),
 def get_corpora(file = 'corpora.csv', sep = ';', encoding = 'utf-8'):
     """ Get str('file_name') and return dict({'di': 'text content'}
         First line containing column headers
+        2 columns: Corpus;Text
         options:
                 file - file_name of document collection
                        default: corpora.csv
@@ -240,6 +241,10 @@ def tf_to_itf(tf = {'doc' : {'word' : 0}}):
     return(itf)
 
 
+def term_frequency(term, tokenized_document):
+    return tokenized_document.count(term)
+
+
 def sublinear_term_frequency(term, tokenized_document):
     count = tokenized_document.count(term)
     if count == 0:
@@ -254,7 +259,7 @@ def sublinear_term_frequency(term, tokenized_document):
 #                     tokenized_document))/max_count))
 
 
-def weighted_term_frequency(term, tokenized_document, weigth = 0.5):
+def weighted_term_frequency(term, tokenized_document, weight = 0.5):
     max_count = max([term_frequency(t, tokenized_document)
                      for t in tokenized_document])
     return (weight + ((weight * term_frequency(term,
@@ -285,19 +290,15 @@ def normalize_tf(tf = {}, norm = 'max', weight = 0.5):
                 tfn[doc] = {}
             if word not in tfn[doc]:
                 tfn[doc][word] = {}
-            tfn[doc][word] = tf[doc][word]/max_freq[doc]
             if norm == 'sublinear':
-                tfn[doc][word] = sublinear_term_frequency(word, doc)
+                tfn[doc][word] = 1 + math.log(tf[doc][word])
             elif norm == 'augmented':
-                tfn[doc][word] = weighted_term_frequency(word,
-                                                         tokenizer(doc), 0.5)
+                tfn[doc][word] = (0.5 + ((0.5 * tf[doc][word])/max_freq[doc]))
             elif norm == 'weighted':
-                tfn[doc][word] = weighted_term_frequency(word,
-                                                         tokenizer(doc),
-                                                         weight)
+                tfn[doc][word] = (weight + (weight * tf[doc][word])
+                                  /max_freq[doc])
             else:
-                tfn[doc][word] = maximum_term_frequency(word,
-                                                        tokenizer(doc))
+                tfn[doc][word] = (tf[doc][word] / max_freq[doc])
     logger.info('Transformation finished.')
     return(tfn)
 
@@ -363,13 +364,13 @@ def tf_idf(corpora, mode = 'dense', norm = 'max', weight = 0.5):
                 if norm == 'sublinear':
                     tf = sublinear_term_frequency(term, document)
                 elif norm == 'augmented':
-                    tf = weighted_term_frequency(term, tokenized_document,
+                    tf = weighted_term_frequency(term, tokenized_corpora,
                                                  0.5)
                 elif norm == 'weighted':
-                    tf = weighted_term_frequency(term, tokenized_document,
+                    tf = weighted_term_frequency(term, tokenized_corpora,
                                                  weight)
                 else:
-                    tf = maximum_term_frequency(term, tokenized_document)
+                    tf = maximum_term_frequency(term, tokenized_corpora)
                 doc_tfidf.append(tf * idf[term])
             tfidf_documents.append(doc_tfidf)
         logger.info('tfidf built.')
@@ -377,4 +378,4 @@ def tf_idf(corpora, mode = 'dense', norm = 'max', weight = 0.5):
 
     else:
         logger.info('Invalid mode indicated... Nothing done.')
-        return(0)
+        return(1)
