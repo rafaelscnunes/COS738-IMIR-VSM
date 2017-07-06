@@ -6,7 +6,7 @@ Data...: 2017/07/05
 
 Detalhes de funcionamento:
 ==========================
-1. o log foi implementado de maneira centralizada, com num único arquivo
+1. O log foi implementado de maneira centralizada, com num único arquivo
    registrando o log de todos os módulos. O sistema de log exige que o
    módulo vsm.py seja importa em todo módulo que utilizar o sistema de log e
    cada módulo deve atualizar o objeto logger com seus dados antes de
