@@ -1,12 +1,12 @@
 #!/Library/Frameworks/Python.framework/Versions/3.6/bin/Python3.6
 # -*- coding: utf-8 -*-
 """
-Created on Wednesday, june 28th, 2017
-@title:  IMIR - In Memory Information Retrieval - Processador de Consultas
-@subtitle: Vector Space Model (VSM)
+Created: 2017-07-05
+@title:  IMIR-VSM (In Memory Information Retrieval - Vector Space Model)
+@module: query.py
 @author: Rafael Nunes - rnunes@cos.ufrj.br
 """
-# DONE: Processador de Consultas - O objetivo desse módulo é transformar o
+# Processador de Consultas - O objetivo desse módulo é transformar o
 #       arquivo de consultas fornecido no padrão de palavras que estamos
 #       utilizando.
 # DONE: 1) O Processador de Consultas deverá ler um arquivo de configuração

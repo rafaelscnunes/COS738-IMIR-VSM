@@ -1,13 +1,14 @@
 #!/Library/Frameworks/Python.framework/Versions/3.6/bin/Python3.6
 # -*- coding: utf-8 -*-
 """
-Created on Wednesday, june 28th, 2017
-@title:  IMIR - In Memory Information Retrieval - Buscador
+Created: 2017-07-05
+@title:  IMIR-VSM (In Memory Information Retrieval - Vector Space Model)
+@module: searcher.py
 @author: Rafael Nunes - rnunes@cos.ufrj.br
 """
 # Buscador - O objetivo desse módulo é obter os resultados de um conjunto de
 #            buscas em um modelo salvo.
-# TODO: 1) O Buscador deverá ler o arquivo de consultas e o arquivo do modelo
+# DONE: 1) O Buscador deverá ler o arquivo de consultas e o arquivo do modelo
 #          vetorial e realizar cada consulta, escrevendo outro arquivo com a
 #          resposta encontrada para cada consulta.
 
@@ -21,7 +22,7 @@ Created on Wednesday, june 28th, 2017
 
 # DONE: 4) Cada palavra na consulta terá o peso 1
 
-# TODO: 5) O arquivo de resultados deverá
+# DONE: 5) O arquivo de resultados deverá
 # a. Ser no formato .csv
 # b. Separar os campos por “;”, ponto e vírgula
 # c. Cada uma de suas linhas terá dois campos:
@@ -31,7 +32,8 @@ Created on Wednesday, june 28th, 2017
 #       2. O segundo elemento é o número do documento
 #       3. O terceiro elemento é a distância do elemento para a consulta
 
-# TODO: 6) Os alunos devem entregar em um arquivo ZIP com o nome do aluno (formato <nomedoaluno>.zip):
+# DONE: 6) Os alunos devem entregar em um arquivo ZIP com o nome do aluno (
+#          formato <nomedoaluno>.zip):
 # 1. Todo o código fonte
 # 2. Um arquivo README.TXT com qualquer instrução adicional para uso do código entregue
 # 3. Um arquivo MODELO.(DOC ou TXT) com a descrição do formato do modelo.
@@ -63,7 +65,8 @@ import heapq
 logger = log.getLogger(__file__.split('/')[-1])
 CONFIG_FILE = 'BUSCA.CFG'
 SEP = ';'
-MIN_SIM = 0.5
+MIN_SIM = 0.25
+
 
 logger.info('Started %s' % __file__)
 if os.path.isfile(CONFIG_FILE):
@@ -139,14 +142,14 @@ if os.path.isfile(CONFIG_FILE):
                                          tf_idf_corpora[corpus])
     # print(searchs)
 
-    logger.info('Bulding results list getting only documents with a cosine '
-                'similarity score equal or greater than %f%%.' % MIN_SIM)
+    logger.info('Finding all documents with a cosine similarity to the '
+                'corresponding query greater than %f.' % MIN_SIM)
     results = []
     for query, documents in searchs.items():
         for doc in documents:
             if searchs[query][doc] > MIN_SIM:
                 results.append([query, doc, searchs[query][doc]])
-    logger.info('Results list built.')
+    logger.info('Queries returned %d documents.' % len(results))
 
     # qtde_buscas = len(tf_idf_queries)
     # qtde_documentos = len(tf_idf_corpora)
@@ -174,7 +177,7 @@ if os.path.isfile(CONFIG_FILE):
 
     # print(results[0:25])
 
-    logger.info('Saving results to %s file' % f_resultados)
+    logger.info('Saving %d results to %s file' % (len(results),f_resultados))
     f_out = open(f_resultados, 'w')
     f_out.write('QueryNumber' + SEP + '[Rank, Document, Similarity]\n')
     rank = 0
@@ -186,7 +189,7 @@ if os.path.isfile(CONFIG_FILE):
         else:
             rank = 0
     f_out.close()
-    logger.info('Results successfully saved to %s.' % f_resultados)
+    logger.info('Queries results successfully saved to %s.' % f_resultados)
     logger.info('Finished %s' % __file__)
 else:
     logger.error(CONFIG_FILE + ' not found!')

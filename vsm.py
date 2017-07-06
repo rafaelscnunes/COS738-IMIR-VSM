@@ -16,7 +16,7 @@ from pprint import pprint
 os.chdir('/Users/rafaenune/Documents/PESC-EDC/COS738 - Busca e Recuperação '
          'da Informação/GitHub/')
 f_log = __file__.split('.')[0]+'.log'
-CONFIG_FILE = 'log.conf'
+CONFIG_FILE = 'LOG.CFG'
 if os.path.isfile(CONFIG_FILE):
     for line in open(CONFIG_FILE, 'r'):
         if line.rstrip('\n').split('=')[0] == 'LOG_FILE':
@@ -410,7 +410,7 @@ def cos_similarity(dict1, dict2):
     dot_product = 0
     for t1 in dict1:
         for t2 in dict2:
-            if t1 in dict2 and t2 in dict1:
+            if t1 == t2:
                 dot_product += dict1[t1]*dict2[t2]
     magnitude = math.sqrt(sum([dict1[term]**2 for term in dict1]))\
                 * math.sqrt(sum([dict2[term]**2 for term in dict2]))

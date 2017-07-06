@@ -1,8 +1,9 @@
 #!/Library/Frameworks/Python.framework/Versions/3.6/bin/Python3.6
 # -*- coding: utf-8 -*-
 """
-Created on Wednesday, june 28th, 2017
-@title:  IMIR - In Memory Information Retrieval - Gerador de Lista Invertida
+Created: 2017-07-05
+@title:  IMIR-VSM (In Memory Information Retrieval - Vector Space Model)
+@module: inverted.py
 @author: Rafael Nunes - rnunes@cos.ufrj.br
 """
 # Gerador de Lista Invertida - A função desse módulo é criar as listas

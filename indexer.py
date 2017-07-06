@@ -1,8 +1,9 @@
 #!/Library/Frameworks/Python.framework/Versions/3.6/bin/Python3.6
 # -*- coding: utf-8 -*-
 """
-Created on Wednesday, june 28th, 2017
-@title:  IMIR - In Memory Information Retrieval - Indexador
+Created: 2017-07-05
+@title:  IMIR-VSM (In Memory Information Retrieval - Vector Space Model)
+@module: indexer.py
 @author: Rafael Nunes - rnunes@cos.ufrj.br
 """
 # Indexador - A função desse módulo é criar o modelo vetorial, dadas as listas
