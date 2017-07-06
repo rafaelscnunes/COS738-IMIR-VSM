@@ -3,9 +3,10 @@ COS738 - Busca e Recuperação da Informação
 Projeto: IMIR-VSM (In Memory Information Retrieval - Vector Space Model)
 Autor..: Rafael Nunes - rnunes@cos.ufrj.br
 Data...: 2017/07/05
+_______________________________________________________________________________
 
 Detalhes de funcionamento:
-==========================
+--------------------------
 1. O log foi implementado de maneira centralizada, com num único arquivo
    registrando o log de todos os módulos. O sistema de log exige que o
    módulo vsm.py seja importa em todo módulo que utilizar o sistema de log e
