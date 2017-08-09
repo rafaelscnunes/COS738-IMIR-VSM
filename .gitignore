@@ -109,9 +109,3 @@ ENV/
 .idea/modules.xml
 .idea/workspace.xml
 IMIR-VSM.pdf
-consultas.csv
-corpora.csv
-esperados.csv
-inverted_index.csv
-resultados.csv
-vsm.pickle
